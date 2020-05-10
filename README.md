@@ -4,6 +4,12 @@
   <a href="https://goreportcard.com/report/github.com/BeanPay/api">
     <img src="https://goreportcard.com/badge/github.com/BeanPay/api" alt="Go Report Card"/>
   </a>
+  <a href="https://codecov.io/gh/BeanPay/api">
+    <img src="https://codecov.io/gh/BeanPay/api/branch/master/graph/badge.svg" alt="Code Coverage" />
+  </a>
+  <a href="https://travis-ci.org/BeanPay/api">
+    <img src="https://travis-ci.org/BeanPay/api.svg?branch=master" alt="Build Status"/>
+  </a>
 </p>
 
 # BeanPay API
