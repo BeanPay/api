@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/beanpay/api/database"
 	"github.com/beanpay/api/server"
+	"github.com/beanpay/api/server/validator"
 	"github.com/joho/godotenv"
 	"github.com/julienschmidt/httprouter"
 	"os"
@@ -22,9 +23,10 @@ func main() {
 	}
 
 	server := &server.Server{
-		Port:   os.Getenv("PORT"),
-		Router: httprouter.New(),
-		DB:     db,
+		Port:      os.Getenv("PORT"),
+		Router:    httprouter.New(),
+		Validator: validator.New(),
+		DB:        db,
 	}
 	server.Start()
 }

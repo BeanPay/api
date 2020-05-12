@@ -3,6 +3,7 @@ package server
 import (
 	"database/sql"
 	"fmt"
+	"github.com/beanpay/api/server/validator"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 )
@@ -11,15 +12,17 @@ import (
 // All HandlerFunc Closures hang off of this struct, so all HandlerFunc's
 // have access to the server values.
 type Server struct {
-	Port   string
-	Router *httprouter.Router
-	DB     *sql.DB
+	Port      string
+	Router    *httprouter.Router
+	Validator validator.Validator
+	DB        *sql.DB
 }
 
 // registerRoutes is responsible for wiring up all of our HandlerFunc
 // to our server's router.
 func (s *Server) registerRoutes() {
 	s.Router.HandlerFunc(http.MethodGet, "/ping", s.ping())
+	s.Router.HandlerFunc(http.MethodPost, "/users", s.createUser())
 }
 
 // Start binds all routes to our router and then serves our
