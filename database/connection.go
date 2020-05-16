@@ -27,7 +27,7 @@ func NewConnection(uri string, config Config) (*sql.DB, error) {
 	if config.MigrationsDir != "" {
 		driver, err := postgres.WithInstance(db, &postgres.Config{})
 		if err != nil {
-			return nil, err
+			return db, err
 		}
 		dbMigrator, err := migrate.NewWithDatabaseInstance(
 			"file://"+config.MigrationsDir,
@@ -35,7 +35,7 @@ func NewConnection(uri string, config Config) (*sql.DB, error) {
 			driver,
 		)
 		if err != nil {
-			return nil, err
+			return db, err
 		}
 		err = dbMigrator.Up()
 		if err != nil {
@@ -44,7 +44,7 @@ func NewConnection(uri string, config Config) (*sql.DB, error) {
 				// non-error in this context.
 				fmt.Println("Migrations up to date.")
 			} else {
-				return nil, err
+				return db, err
 			}
 		}
 	}
