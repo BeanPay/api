@@ -51,8 +51,30 @@ func (p *UserRepository) Insert(user User) (*User, error) {
 	return newUser, nil
 }
 
-func (p *UserRepository) Fetch(id string) {
-	return
+func (p *UserRepository) FetchByEmail(email string) (*User, error) {
+	row := p.DB.QueryRow(
+		"SELECT * FROM users WHERE email = $1;",
+		email,
+	)
+	user := &User{}
+	err := user.consumeRow(row)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (p *UserRepository) FetchByID(id string) (*User, error) {
+	row := p.DB.QueryRow(
+		"SELECT * FROM users WHERE id = $1;",
+		id,
+	)
+	user := &User{}
+	err := user.consumeRow(row)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
 func (p *UserRepository) Update(user User) error {
