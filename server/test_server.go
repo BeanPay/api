@@ -3,7 +3,6 @@ package server
 import (
 	"github.com/beanpay/api/database"
 	"github.com/beanpay/api/server/validator"
-	"os"
 )
 
 // TestServer is a utility Server wrapper that is used to simplify
@@ -16,32 +15,22 @@ type TestServer struct {
 	EphemeralDatabase *database.EphemeralDatabase
 }
 
-func NewTestServer() *TestServer {
-	// Get a connection to the database
-	ephemeralDatabase, err := database.NewEphemeralDatabase(
-		database.ConnectionInfo{
-			Host:         os.Getenv("TEST_POSTGRES_HOST"),
-			Port:         os.Getenv("TEST_POSTGRES_PORT"),
-			User:         os.Getenv("TEST_POSTGRES_USER"),
-			Password:     os.Getenv("TEST_POSTGRES_PASSWORD"),
-			DatabaseName: os.Getenv("TEST_POSTGRES_DB"),
-			SSLMode:      os.Getenv("TEST_POSTGRES_SSL_MODE"),
-		},
+func NewTestServer() (*TestServer, error) {
+	ephemeralDatabase, err := database.NewTestDatabase(
 		database.Config{
 			MigrationsDir: "../database/migrations",
 		},
 	)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-
 	return &TestServer{
 		EphemeralDatabase: ephemeralDatabase,
 		Server: Server{
 			Validator: validator.New(),
 			DB:        ephemeralDatabase.Connection(),
 		},
-	}
+	}, nil
 }
 
 func (t *TestServer) Shutdown() {

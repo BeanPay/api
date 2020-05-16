@@ -23,7 +23,8 @@ func (c *CreateUserBody) Read(p []byte) (n int, err error) {
 
 func TestCreateUser(t *testing.T) {
 	// Prepare the Server
-	server := NewTestServer()
+	server, err := NewTestServer()
+	assert.Nil(t, err)
 	defer server.Shutdown()
 
 	// Test that we throw an error with a misformatted request
