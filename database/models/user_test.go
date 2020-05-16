@@ -8,7 +8,7 @@ import (
 
 func TestUserRepo(t *testing.T) {
 	// Create a UserRepo
-	ephemeralDatabase, err := database.NewTestDatabase(
+	ephemeralDatabase, err := database.NewTestEphemeralDatabase(
 		database.Config{
 			MigrationsDir: "../migrations",
 		},

@@ -16,7 +16,7 @@ type TestServer struct {
 }
 
 func NewTestServer() (*TestServer, error) {
-	ephemeralDatabase, err := database.NewTestDatabase(
+	ephemeralDatabase, err := database.NewTestEphemeralDatabase(
 		database.Config{
 			MigrationsDir: "../database/migrations",
 		},
