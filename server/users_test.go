@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -25,9 +26,25 @@ func TestCreateUser(t *testing.T) {
 	server := NewTestServer()
 	defer server.Shutdown()
 
-	// Test that we are requiring the Email & Password fields
+	// Test that we throw an error with a misformatted request
 	recorder := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/users",
+	req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader("-"))
+	server.createUser()(recorder, req)
+	assert.Equal(t,
+		response.Response{
+			StatusCode: http.StatusBadRequest,
+			StatusText: http.StatusText(http.StatusBadRequest),
+			ErrorDetails: &[]string{
+				"Failed to parse the request body.",
+			},
+			Result: nil,
+		},
+		response.Parse(recorder.Result().Body),
+	)
+
+	// Test that we are requiring the Email & Password fields
+	recorder = httptest.NewRecorder()
+	req = httptest.NewRequest(http.MethodPost, "/users",
 		&CreateUserBody{},
 	)
 	server.createUser()(recorder, req)
