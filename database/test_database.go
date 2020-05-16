@@ -7,7 +7,7 @@ import (
 // NewTestDatabase returns an *EphemeralDatabase spun up
 // against our TEST_POSTGRES environment variables, which
 // centralizes this config & simplifies our test code.
-func NewTestDatabase() (*EphemeralDatabase, error) {
+func NewTestDatabase(config Config) (*EphemeralDatabase, error) {
 	ephemeralDatabase, err := NewEphemeralDatabase(
 		ConnectionInfo{
 			Host:         os.Getenv("TEST_POSTGRES_HOST"),
@@ -17,9 +17,7 @@ func NewTestDatabase() (*EphemeralDatabase, error) {
 			DatabaseName: os.Getenv("TEST_POSTGRES_DB"),
 			SSLMode:      os.Getenv("TEST_POSTGRES_SSL_MODE"),
 		},
-		Config{
-			MigrationsDir: "../database/migrations",
-		},
+		config,
 	)
 	if err != nil {
 		return nil, err

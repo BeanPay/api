@@ -25,6 +25,7 @@ func TestCreateUser(t *testing.T) {
 	// Prepare the Server
 	server, err := NewTestServer()
 	assert.Nil(t, err)
+	defer server.Shutdown()
 
 	// Test that we throw an error with a misformatted request
 	recorder := httptest.NewRecorder()
