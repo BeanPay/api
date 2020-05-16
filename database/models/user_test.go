@@ -6,11 +6,6 @@ import (
 	"testing"
 )
 
-var fixtureUser = User{
-	Email:    "some-email@example.com",
-	Password: "some-password",
-}
-
 func TestUserRepo(t *testing.T) {
 	// Create a UserRepo
 	ephemeralDatabase, err := database.NewTestDatabase(
@@ -25,24 +20,27 @@ func TestUserRepo(t *testing.T) {
 	}
 
 	// Create a user
-	createdUser, err := userRepo.Insert(fixtureUser)
+	newUser := &User{
+		Email:    "some-email@example.com",
+		Password: "some-password",
+	}
+	err = userRepo.Insert(newUser)
 	assert.Nil(t, err)
-	assert.Equal(t, fixtureUser.Email, createdUser.Email)
+	assert.NotEqual(t, "", newUser.Id)
 
 	// Try to create the same user to ensure it's not created
-	duplicateUser, err := userRepo.Insert(fixtureUser)
-	assert.Nil(t, duplicateUser)
+	err = userRepo.Insert(newUser)
 	assert.NotNil(t, err)
 
 	// Fetch the user by their ID
-	fetchedByIdUser, err := userRepo.FetchByID(createdUser.Id)
+	fetchedByIdUser, err := userRepo.FetchByID(newUser.Id)
 	assert.Nil(t, err)
-	assert.Equal(t, createdUser.Email, fetchedByIdUser.Email)
+	assert.Equal(t, newUser.Email, fetchedByIdUser.Email)
 
 	// Fetch the user by their email address
-	fetchedByEmailUser, err := userRepo.FetchByEmail(createdUser.Email)
+	fetchedByEmailUser, err := userRepo.FetchByEmail(newUser.Email)
 	assert.Nil(t, err)
-	assert.Equal(t, createdUser.Id, fetchedByEmailUser.Id)
+	assert.Equal(t, newUser.Id, fetchedByEmailUser.Id)
 
 	// Fetch a user by a non-existing ID
 	failedFetchIdUser, err := userRepo.FetchByID("fake-id")
@@ -53,4 +51,23 @@ func TestUserRepo(t *testing.T) {
 	failedFetchEmailUser, err := userRepo.FetchByEmail("fake-email")
 	assert.NotNil(t, err)
 	assert.Nil(t, failedFetchEmailUser)
+
+	// Update the users email
+	newUser.Email = "new-email@example.com"
+	err = userRepo.Update(newUser)
+	assert.Nil(t, err)
+
+	// Fetch the user by their new address
+	fetchedUpdatedUser, err := userRepo.FetchByEmail("new-email@example.com")
+	assert.Nil(t, err)
+	assert.Equal(t, newUser.Id, fetchedUpdatedUser.Id)
+
+	// Delete it
+	err = userRepo.Delete(newUser)
+	assert.Nil(t, err)
+
+	// Verify we can no longer fetch this user
+	fetchedDeletedUser, err := userRepo.FetchByID(newUser.Id)
+	assert.Nil(t, fetchedDeletedUser)
+	assert.NotNil(t, err)
 }

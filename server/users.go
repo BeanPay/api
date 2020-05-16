@@ -42,7 +42,7 @@ func (s *Server) createUser() http.HandlerFunc {
 		}
 
 		// Create the user record
-		_, err = userRepo.Insert(models.User{
+		err = userRepo.Insert(&models.User{
 			Email:    requestBody.Email,
 			Password: string(pwBytes),
 		})
