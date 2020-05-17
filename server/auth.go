@@ -5,17 +5,24 @@ import (
 	"github.com/beanpay/api/database/models"
 	"github.com/beanpay/api/server/jwt"
 	"github.com/generalledger/response"
+	"github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"time"
 )
 
+const (
+	accessTokenDuration  = 15 * time.Minute
+	refreshTokenDuration = 90 * (24 * time.Hour)
+)
+
 type authResponseBody struct {
-	Token      string    `json:"token"`
-	Expiration time.Time `json:"expiration"`
+	AccessToken           string    `json:"access_token"`
+	AccessTokenExpiration time.Time `json:"access_token_expiration"`
 }
 
 func (s *Server) login() http.HandlerFunc {
+	refreshTokenRepo := models.RefreshTokenRepository{DB: s.DB}
 	userRepo := models.UserRepository{DB: s.DB}
 	type RequestBody struct {
 		Email    string `json:"email" validate:"required,email"`
@@ -55,18 +62,45 @@ func (s *Server) login() http.HandlerFunc {
 			return
 		}
 
-		// Generate a Signed JWT token
-		tokenExpiration := time.Now().Add(15 * time.Minute)
-		token, err := jwt.GenerateSignedToken(user.Id, tokenExpiration)
+		// Generate a Signed JWT AccessToken
+		accessTokenExpiration := time.Now().Add(accessTokenDuration)
+		accessToken, err := jwt.GenerateSignedToken(user.Id, accessTokenExpiration)
+		if err != nil {
+			resp.SetResult(http.StatusInternalServerError, nil)
+			return
+		}
+
+		// Generate a RefreshToken
+		chainId := uuid.NewV4()
+		refreshToken := &models.RefreshToken{
+			ChainId: chainId.String(),
+			UserId:  user.Id,
+		}
+		err = refreshTokenRepo.Insert(refreshToken)
 		if err != nil {
 			resp.SetResult(http.StatusInternalServerError, nil)
 			return
 		}
 
 		// OK
-		resp.SetResult(http.StatusOK, authResponseBody{
-			Token:      token,
-			Expiration: tokenExpiration,
+		http.SetCookie(w, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    refreshToken.Id,
+			Expires:  time.Now().Add(refreshTokenDuration),
+			Secure:   true,
+			HttpOnly: true,
 		})
+		resp.SetResult(http.StatusOK, authResponseBody{
+			AccessToken:           accessToken,
+			AccessTokenExpiration: accessTokenExpiration,
+		})
+	}
+}
+
+func (s *Server) authRefresh() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		resp := response.New(w)
+		defer resp.Output()
+		resp.SetResult(http.StatusOK, nil)
 	}
 }
