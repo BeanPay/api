@@ -23,7 +23,6 @@ type Server struct {
 func (s *Server) registerRoutes() {
 	s.Router.HandlerFunc(http.MethodGet, "/ping", s.ping())
 	s.Router.HandlerFunc(http.MethodPost, "/users", s.createUser())
-
 	s.Router.HandlerFunc(http.MethodPost, "/auth/login", s.login())
 	s.Router.HandlerFunc(http.MethodPost, "/auth/refresh", s.authRefresh())
 }

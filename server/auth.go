@@ -87,8 +87,10 @@ func (s *Server) login() http.HandlerFunc {
 			Name:     "refresh_token",
 			Value:    refreshToken.Id,
 			Expires:  time.Now().Add(refreshTokenDuration),
+			Path:     "/",
 			Secure:   true,
 			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
 		})
 		resp.SetResult(http.StatusOK, authResponseBody{
 			AccessToken:           accessToken,
@@ -98,9 +100,96 @@ func (s *Server) login() http.HandlerFunc {
 }
 
 func (s *Server) authRefresh() http.HandlerFunc {
+	refreshTokenRepo := models.RefreshTokenRepository{DB: s.DB}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		resp := response.New(w)
 		defer resp.Output()
-		resp.SetResult(http.StatusOK, nil)
+
+		// Get the refresh token
+		refreshTokenCookie, err := r.Cookie("refresh_token")
+		if err != nil {
+			resp.SetResult(http.StatusUnauthorized, nil)
+			return
+		}
+
+		// Load the Refresh Token
+		refreshToken, err := refreshTokenRepo.FetchByID(refreshTokenCookie.Value)
+		if err != nil {
+			resp.SetResult(http.StatusUnauthorized, nil)
+			return
+		}
+
+		// Load the most recent RefreshToken in the chain so we can ensure
+		// the latest was passed in.
+		latestToken, err := refreshTokenRepo.FetchMostRecentInChain(refreshToken.ChainId)
+		if err != nil {
+			// This shouldn't happen, as we just verified that there is at least
+			// one refresh token in this chain, so throwing a 500
+			resp.SetResult(http.StatusInternalServerError, nil)
+			return
+		}
+		// If the RefreshToken that was passed in isn't the latest, something
+		// nefarious is likely happening so we wipe the entire chain to evict
+		// any potential bad actors that are using an upstream token.
+		// https://auth0.com/docs/tokens/concepts/refresh-token-rotation#automatic-reuse-detection
+		if refreshToken.Id != latestToken.Id {
+			err := refreshTokenRepo.DeleteChain(refreshToken.ChainId)
+			if err != nil {
+				resp.SetResult(http.StatusInternalServerError, nil)
+				return
+			}
+			resp.SetResult(http.StatusUnauthorized, nil)
+			return
+		}
+
+		// Verify that the refreshToken isn't expired
+		tokenExpiry := refreshToken.CreatedAt.Add(refreshTokenDuration)
+		if time.Now().After(tokenExpiry) {
+			// Wipe the chain from the DB.  We've verified this is the latest
+			// link in the chain and it is expired. This chain is dead now,
+			// so just  clean this chain out of the DB.
+			err := refreshTokenRepo.DeleteChain(refreshToken.ChainId)
+			if err != nil {
+				resp.SetResult(http.StatusInternalServerError, nil)
+				return
+			}
+			resp.SetResult(http.StatusUnauthorized, nil)
+			return
+		}
+
+		// Generate a new Signed JWT AccessToken
+		accessTokenExpiration := time.Now().Add(accessTokenDuration)
+		accessToken, err := jwt.GenerateSignedToken(refreshToken.UserId, accessTokenExpiration)
+		if err != nil {
+			resp.SetResult(http.StatusInternalServerError, nil)
+			return
+		}
+
+		// Generate a new RefreshToken
+		newRefreshToken := &models.RefreshToken{
+			ChainId: refreshToken.ChainId,
+			UserId:  refreshToken.UserId,
+		}
+		err = refreshTokenRepo.Insert(newRefreshToken)
+		if err != nil {
+			resp.SetResult(http.StatusInternalServerError, nil)
+			return
+		}
+
+		// OK
+		http.SetCookie(w, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    newRefreshToken.Id,
+			Expires:  time.Now().Add(refreshTokenDuration),
+			Path:     "/",
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
+		})
+		resp.SetResult(http.StatusOK, authResponseBody{
+			AccessToken:           accessToken,
+			AccessTokenExpiration: accessTokenExpiration,
+		})
 	}
 }
