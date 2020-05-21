@@ -75,6 +75,10 @@ func TestRefreshTokenRepo(t *testing.T) {
 	err = refreshTokenRepo.DeleteChain(testingChainID)
 	assert.NotNil(t, err)
 
+	// Delete by a non-uuid to ensure an error is thrown
+	err = refreshTokenRepo.DeleteChain("non-uuid")
+	assert.NotNil(t, err)
+
 	// Fetch the most recent in the chain to ensure that the chain was properly wiped
 	mostRecentPostDelete, err := refreshTokenRepo.FetchMostRecentInChain(testingChainID)
 	assert.NotNil(t, err)
