@@ -28,6 +28,11 @@ func TestJwtSignatory(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(t, "token is expired by 1s", err.Error())
 
+	// Verify that the proper algorithm must be used
+	_, err = signatoryOne.ParseToken("eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.e30.vf3TqzF5aHxl9AHEBKqyWF2GINAWx2UUabmm2-_3qJNj6wwMHCde04OteqQi8UIq7b330WbeW7NgXKe6oKzplQ")
+	assert.NotNil(t, err)
+	assert.Equal(t, "Unexpected signing method: HS512", err.Error())
+
 	// Create a Second Signatory
 	signatoryTwo := &JwtSignatory{
 		SigningKey: []byte("sig-two"),
