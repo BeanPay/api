@@ -8,13 +8,13 @@ import (
 	"strings"
 )
 
-func Authenticate(next http.HandlerFunc) http.HandlerFunc {
+func Authenticate(jwtSignatory *jwt.JwtSignatory, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		resp := response.New(w)
 
 		// Parse & validate the token
 		token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
-		claims, err := jwt.ParseToken(token)
+		claims, err := jwtSignatory.ParseToken(token)
 		if err != nil {
 			resp.SetResult(http.StatusUnauthorized, nil).Output()
 			return

@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"github.com/beanpay/api/database/models"
-	"github.com/beanpay/api/server/jwt"
 	"github.com/generalledger/response"
 	"github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -64,7 +63,7 @@ func (s *Server) login() http.HandlerFunc {
 
 		// Generate a Signed JWT AccessToken
 		accessTokenExpiration := time.Now().Add(accessTokenDuration)
-		accessToken, err := jwt.GenerateSignedToken(user.Id, accessTokenExpiration)
+		accessToken, err := s.JwtSignatory.GenerateSignedToken(user.Id, accessTokenExpiration)
 		if err != nil {
 			resp.SetResult(http.StatusInternalServerError, nil)
 			return
@@ -160,7 +159,7 @@ func (s *Server) authRefresh() http.HandlerFunc {
 
 		// Generate a new Signed JWT AccessToken
 		accessTokenExpiration := time.Now().Add(accessTokenDuration)
-		accessToken, err := jwt.GenerateSignedToken(refreshToken.UserId, accessTokenExpiration)
+		accessToken, err := s.JwtSignatory.GenerateSignedToken(refreshToken.UserId, accessTokenExpiration)
 		if err != nil {
 			resp.SetResult(http.StatusInternalServerError, nil)
 			return
