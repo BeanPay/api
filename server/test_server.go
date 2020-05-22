@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/beanpay/api/database"
+	"github.com/beanpay/api/server/jwt"
 	"github.com/beanpay/api/server/validator"
 )
 
@@ -29,6 +30,9 @@ func NewTestServer() (*TestServer, error) {
 		Server: Server{
 			Validator: validator.New(),
 			DB:        ephemeralDatabase.Connection(),
+			JwtSignatory: &jwt.JwtSignatory{
+				SigningKey: []byte("test-signing-key"),
+			},
 		},
 	}, nil
 }
