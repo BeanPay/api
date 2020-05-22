@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/beanpay/api/database"
 	"github.com/beanpay/api/server"
+	"github.com/beanpay/api/server/jwt"
 	"github.com/beanpay/api/server/validator"
 	"github.com/joho/godotenv"
 	"github.com/julienschmidt/httprouter"
@@ -26,7 +27,10 @@ func main() {
 		Port:      os.Getenv("PORT"),
 		Router:    httprouter.New(),
 		Validator: validator.New(),
-		DB:        db,
+		JwtSignatory: &jwt.JwtSignatory{
+			SigningKey: []byte(os.Getenv("JWT_SIGNING_KEY")),
+		},
+		DB: db,
 	}
 	server.Start()
 }
