@@ -37,6 +37,10 @@ func NewEphemeralDatabase(bootstrapConnection ConnectionInfo, config Config) (*E
 	if err != nil {
 		return nil, err
 	}
+	err = bootstrapDB.Ping()
+	if err != nil {
+		return nil, err
+	}
 
 	// Create the actual database.
 	//

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"database/sql"
 	"github.com/beanpay/api/database"
 	"github.com/generalledger/response"
 	"github.com/stretchr/testify/assert"
@@ -9,6 +10,35 @@ import (
 	"os"
 	"testing"
 )
+
+func TestPingFailure(t *testing.T) {
+	// Get a faulty connection to a database
+	db, err := sql.Open("postgres",
+		database.ConnectionInfo{
+			Host:         "localhost",
+			Port:         "5555",
+			User:         "user",
+			Password:     "incorrect-password",
+			DatabaseName: "incorrect-database",
+			SSLMode:      "require",
+		}.ToURI(),
+	)
+	assert.Nil(t, err)
+
+	// Prepare Server
+	server := &Server{
+		DB: db,
+	}
+
+	// Send Request
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/ping", nil)
+	server.ping()(recorder, req)
+
+	// Test
+	parsedResponse := response.Parse(recorder.Result().Body)
+	assert.Equal(t, parsedResponse.StatusCode, http.StatusInternalServerError)
+}
 
 func TestPingSuccess(t *testing.T) {
 	// Get a connection to the database

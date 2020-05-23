@@ -24,16 +24,6 @@ func (u *User) consumeRow(row *sql.Row) error {
 	)
 }
 
-func (u *User) consumeNextRow(rows *sql.Rows) error {
-	return rows.Scan(
-		&u.Id,
-		&u.Email,
-		&u.Password,
-		&u.CreatedAt,
-		&u.UpdatedAt,
-	)
-}
-
 type UserRepository struct {
 	DB *sql.DB
 }

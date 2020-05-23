@@ -6,8 +6,22 @@ import (
 )
 
 func TestEphemeralDatabaseBadConfig(t *testing.T) {
-	// Spin up a new Ephemeral Database with a bad config
-	_, err := NewTestEphemeralDatabase(
+	// Spin up a Ephemeral Database with bad ConnectionInfo
+	_, err := NewEphemeralDatabase(
+		ConnectionInfo{
+			Host:         "localhost",
+			Port:         "5555",
+			User:         "user",
+			Password:     "incorrect-password",
+			DatabaseName: "incorrect-database",
+			SSLMode:      "enabled",
+		},
+		Config{},
+	)
+	assert.NotNil(t, err)
+
+	// Spin up a new Ephemeral Database with a bad migration config
+	_, err = NewTestEphemeralDatabase(
 		Config{
 			MigrationsDir: "../incorect/path/to/migrations",
 		},
