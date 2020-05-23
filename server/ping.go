@@ -14,13 +14,15 @@ func (s *Server) ping() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		resp := response.New(w)
 		defer resp.Output()
+		responseStatus := http.StatusOK
 		pingResp := pingResponse{
 			DbConn: "OK",
 		}
 		err := s.DB.Ping()
 		if err != nil {
+			responseStatus = http.StatusInternalServerError
 			pingResp.DbConn = err.Error()
 		}
-		resp.SetResult(http.StatusOK, pingResp)
+		resp.SetResult(responseStatus, pingResp)
 	}
 }

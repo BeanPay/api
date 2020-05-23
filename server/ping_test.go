@@ -1,6 +1,7 @@
 package server
 
 import (
+	"database/sql"
 	"github.com/beanpay/api/database"
 	"github.com/generalledger/response"
 	"github.com/stretchr/testify/assert"
@@ -9,6 +10,43 @@ import (
 	"os"
 	"testing"
 )
+
+func TestPingFailure(t *testing.T) {
+	// Get a faulty connection to a database
+	db, err := sql.Open("postgres",
+		database.ConnectionInfo{
+			Host:         os.Getenv("TEST_POSTGRES_HOST"),
+			Port:         os.Getenv("TEST_POSTGRES_PORT"),
+			User:         os.Getenv("TEST_POSTGRES_USER"),
+			Password:     os.Getenv("TEST_POSTGRES_PASSWORD"),
+			DatabaseName: os.Getenv("TEST_POSTGRES_DB"),
+			SSLMode:      "require",
+		}.ToURI(),
+	)
+	assert.Nil(t, err)
+
+	// Prepare Server
+	server := &Server{
+		DB: db,
+	}
+
+	// Send Request
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/ping", nil)
+	server.ping()(recorder, req)
+
+	// Test
+	assert.Equal(t,
+		response.Response{
+			StatusCode: http.StatusInternalServerError,
+			StatusText: http.StatusText(http.StatusInternalServerError),
+			Result: map[string]interface{}{
+				"database_connection": "pq: SSL is not enabled on the server",
+			},
+		},
+		response.Parse(recorder.Result().Body),
+	)
+}
 
 func TestPingSuccess(t *testing.T) {
 	// Get a connection to the database
