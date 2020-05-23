@@ -70,6 +70,10 @@ func TestUserRepo(t *testing.T) {
 	err = userRepo.Delete(newUser)
 	assert.NotNil(t, err)
 
+	// Try to delete a user with a fake ID
+	err = userRepo.Delete(&User{Id: "fake-id"})
+	assert.NotNil(t, err)
+
 	// Verify we can no longer fetch this user
 	fetchedDeletedUser, err := userRepo.FetchByID(newUser.Id)
 	assert.Nil(t, fetchedDeletedUser)
