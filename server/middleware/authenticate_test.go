@@ -12,15 +12,17 @@ import (
 
 // A simple jwtSignatory to generate JWT Tokens for
 // use against our Authenticate middleware.
-var jwtSignatory = &jwt.JwtSignatory{
-	SigningKey: []byte("some-key"),
-}
+var (
+	jwtSignatory = &jwt.JwtSignatory{
+		SigningKey: []byte("some-key"),
+	}
+	requireAuth = GetRequireAuthMiddleware(jwtSignatory)
+)
 
 // A simple http.HandlerFunc which is wrapped in our Authenticate
 // middleware that is used in the tests below.
 func authenticatedHandler() http.HandlerFunc {
-	return Authenticate(
-		jwtSignatory,
+	return requireAuth(
 		func(w http.ResponseWriter, r *http.Request) {
 			resp := response.New(w)
 			defer resp.Output()
