@@ -8,7 +8,7 @@ import (
 
 type Bill struct {
 	Id                string    `json:"id"`
-	UserId            string    `json:"user_id"`
+	UserId            string    `json:"-"`
 	Name              string    `json:"name"`
 	PaymentURL        string    `json:"payment_url"`
 	Frequency         string    `json:"frequency"`
@@ -64,7 +64,7 @@ func (r *BillRepository) fetch(query string, args ...interface{}) ([]*Bill, erro
 }
 
 func (r *BillRepository) FetchAllUserBills(userId string) ([]*Bill, error) {
-	return r.fetch("SELECT * FROM bills WHERE user_id = $1", userId)
+	return r.fetch("SELECT * FROM bills WHERE user_id = $1 ORDER BY created_at ASC;", userId)
 }
 
 func (r *BillRepository) FetchByID(id string) (*Bill, error) {
