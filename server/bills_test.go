@@ -107,7 +107,7 @@ func TestBillUpdate(t *testing.T) {
 	user2 := server.SeedUser()
 	bill2 := server.SeedBill(user2["id"].(string))
 
-	// Validate auth is required for [PUT] /bills
+	// Validate auth is required
 	recorder := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "/bills/"+bill1["id"].(string), nil)
 	server.updateBill()(recorder, req)
@@ -191,4 +191,85 @@ func TestBillUpdate(t *testing.T) {
 	server.updateBill()(recorder, req)
 	response := response.Parse(recorder.Result().Body)
 	assert.Equal(t, http.StatusOK, response.StatusCode)
+}
+
+func TestBillDelete(t *testing.T) {
+	// Prepare the Server & seed some data
+	server, err := NewTestServer()
+	assert.Nil(t, err)
+	defer server.Shutdown()
+	user1 := server.SeedUser()
+	bill1 := server.SeedBill(user1["id"].(string))
+	user2 := server.SeedUser()
+	bill2 := server.SeedBill(user2["id"].(string))
+
+	// Validate auth is required
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodDelete, "/bills/"+bill1["id"].(string), nil)
+	server.deleteBill()(recorder, req)
+	assert.Equal(t,
+		response.Response{
+			StatusCode:   http.StatusUnauthorized,
+			StatusText:   http.StatusText(http.StatusUnauthorized),
+			ErrorDetails: nil,
+			Result:       nil,
+		},
+		response.Parse(recorder.Result().Body),
+	)
+
+	// Ensure we cannot delete a bill that does not exist
+	recorder = httptest.NewRecorder()
+	req = server.NewAuthenticatedRequest(http.MethodDelete, "/bills/some-invalid-id", user1["id"].(string), nil)
+	server.deleteBill()(recorder, req)
+	assert.Equal(t,
+		response.Response{
+			StatusCode:   http.StatusNotFound,
+			StatusText:   http.StatusText(http.StatusNotFound),
+			ErrorDetails: nil,
+			Result:       nil,
+		},
+		response.Parse(recorder.Result().Body),
+	)
+
+	// Ensure we cannot delete a bill that does not belong to the user
+	recorder = httptest.NewRecorder()
+	req = server.NewAuthenticatedRequest(http.MethodDelete, "/bills/"+bill2["id"].(string), user1["id"].(string), nil)
+	server.deleteBill()(recorder, req)
+	assert.Equal(t,
+		response.Response{
+			StatusCode:   http.StatusForbidden,
+			StatusText:   http.StatusText(http.StatusForbidden),
+			ErrorDetails: nil,
+			Result:       nil,
+		},
+		response.Parse(recorder.Result().Body),
+	)
+
+	// Ensure we can successfully delete our bills
+	recorder = httptest.NewRecorder()
+	req = server.NewAuthenticatedRequest(http.MethodDelete, "/bills/"+bill1["id"].(string), user1["id"].(string), nil)
+	server.deleteBill()(recorder, req)
+	assert.Equal(t,
+		response.Response{
+			StatusCode:   http.StatusOK,
+			StatusText:   http.StatusText(http.StatusOK),
+			ErrorDetails: nil,
+			Result:       nil,
+		},
+		response.Parse(recorder.Result().Body),
+	)
+
+	// Ensure the bill is really deleted by trying to fetch it
+	recorder = httptest.NewRecorder()
+	req = server.NewAuthenticatedRequest(http.MethodGet, "/bills", user1["id"].(string), nil)
+	server.fetchBills()(recorder, req)
+	assert.Equal(t,
+		response.Response{
+			StatusCode:   http.StatusOK,
+			StatusText:   http.StatusText(http.StatusOK),
+			ErrorDetails: nil,
+			Result:       []interface{}{},
+		},
+		response.Parse(recorder.Result().Body),
+	)
 }
