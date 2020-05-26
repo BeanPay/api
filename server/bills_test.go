@@ -273,3 +273,72 @@ func TestBillDelete(t *testing.T) {
 		response.Parse(recorder.Result().Body),
 	)
 }
+
+func TestBillCreate(t *testing.T) {
+	// Prepare the Server & seed some data
+	server, err := NewTestServer()
+	assert.Nil(t, err)
+	defer server.Shutdown()
+	user1 := server.SeedUser()
+
+	// Validate auth is required
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/bills", nil)
+	server.createBill()(recorder, req)
+	assert.Equal(t,
+		response.Response{
+			StatusCode:   http.StatusUnauthorized,
+			StatusText:   http.StatusText(http.StatusUnauthorized),
+			ErrorDetails: nil,
+			Result:       nil,
+		},
+		response.Parse(recorder.Result().Body),
+	)
+
+	// Validate that we error out with a misformatted request
+	recorder = httptest.NewRecorder()
+	req = server.NewAuthenticatedRequest(http.MethodPost, "/bills", user1["id"].(string), strings.NewReader("-"))
+	server.createBill()(recorder, req)
+	assert.Equal(t,
+		response.Response{
+			StatusCode:   http.StatusBadRequest,
+			StatusText:   http.StatusText(http.StatusBadRequest),
+			ErrorDetails: &[]string{"Failed to parse the request body."},
+			Result:       nil,
+		},
+		response.Parse(recorder.Result().Body),
+	)
+
+	// Test that we are performing field level validation checks
+	recorder = httptest.NewRecorder()
+	req = server.NewAuthenticatedRequest(http.MethodPost, "/bills", user1["id"].(string), &BillRequestBody{
+		Name:              "some-name",
+		PaymentURL:        "invalid-url",
+		Frequency:         "monthly",
+		EstimatedTotalDue: 19.99,
+		FirstDueDate:      "2020-01-01",
+	})
+	server.createBill()(recorder, req)
+	assert.Equal(t,
+		response.Response{
+			StatusCode:   http.StatusBadRequest,
+			StatusText:   http.StatusText(http.StatusBadRequest),
+			ErrorDetails: &[]string{"PaymentURL must be a valid URL"},
+			Result:       nil,
+		},
+		response.Parse(recorder.Result().Body),
+	)
+
+	// Test that we can create a new bill
+	recorder = httptest.NewRecorder()
+	req = server.NewAuthenticatedRequest(http.MethodPost, "/bills", user1["id"].(string), &BillRequestBody{
+		Name:              "some-name",
+		PaymentURL:        "https://example.com",
+		Frequency:         "monthly",
+		EstimatedTotalDue: 19.99,
+		FirstDueDate:      "2020-01-01",
+	})
+	server.createBill()(recorder, req)
+	result := response.Parse(recorder.Result().Body)
+	assert.Equal(t, http.StatusOK, result.StatusCode)
+}
