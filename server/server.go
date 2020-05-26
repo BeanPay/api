@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/beanpay/api/server/jwt"
+	"github.com/beanpay/api/server/middleware"
 	"github.com/beanpay/api/server/validator"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
@@ -23,7 +24,12 @@ type Server struct {
 // registerRoutes is responsible for wiring up all of our HandlerFunc
 // to our server's router.
 func (s *Server) registerRoutes() {
+	requireAuth := middleware.GetRequireAuthMiddleware(s.JwtSignatory)
 	s.Router.HandlerFunc(http.MethodGet, "/ping", s.ping())
+	s.Router.HandlerFunc(http.MethodGet, "/bills", requireAuth(s.fetchBills()))
+	s.Router.HandlerFunc(http.MethodPost, "/bills", requireAuth(s.createBill()))
+	s.Router.HandlerFunc(http.MethodPut, "/bills/:id", requireAuth(s.updateBill()))
+	s.Router.HandlerFunc(http.MethodDelete, "/bills/:id", requireAuth(s.deleteBill()))
 	s.Router.HandlerFunc(http.MethodPost, "/users", s.createUser())
 	s.Router.HandlerFunc(http.MethodPost, "/auth/login", s.login())
 	s.Router.HandlerFunc(http.MethodPost, "/auth/refresh", s.authRefresh())
