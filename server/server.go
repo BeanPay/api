@@ -29,6 +29,8 @@ func (s *Server) registerRoutes() {
 
 	// Payments Endpoints
 	s.Router.HandlerFunc(http.MethodGet, "/payments", requireAuth(s.fetchPayments()))
+	s.Router.HandlerFunc(http.MethodPost, "/payments", requireAuth(s.createPayment()))
+	s.Router.HandlerFunc(http.MethodDelete, "/payments/:id", requireAuth(s.deletePayment()))
 
 	// Bills Endpoints
 	s.Router.HandlerFunc(http.MethodGet, "/bills", requireAuth(s.fetchBills()))
