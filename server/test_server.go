@@ -113,6 +113,29 @@ func (t *TestServer) SeedBill(userId string) map[string]interface{} {
 	return result
 }
 
+// Seeds a random Payment into our TestServer's database.
+// This returns a map[string]interface{} for ease of result comparison,
+// as the output of a parsed HTTPRecorder's result will be untyped.
+func (t *TestServer) SeedPayment(billId string) map[string]interface{} {
+	// Create a Payment in our Database
+	paymentRepo := models.PaymentRepository{DB: t.EphemeralDatabase.Connection()}
+	payment := &models.Payment{
+		BillId:    billId,
+		DueDate:   time.Now().Add(time.Hour * 24 * 10),
+		TotalPaid: 19.99,
+	}
+	err := paymentRepo.Insert(payment)
+	if err != nil {
+		panic(err)
+	}
+
+	// Convert to a map[string]interface{}
+	var result map[string]interface{}
+	b, _ := json.Marshal(payment)
+	json.Unmarshal(b, &result)
+	return result
+}
+
 func (t *TestServer) Shutdown() {
 	t.EphemeralDatabase.Terminate()
 }
