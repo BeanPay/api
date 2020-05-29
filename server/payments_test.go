@@ -79,3 +79,72 @@ func TestPaymentFetch(t *testing.T) {
 		response.Parse(recorder.Result().Body),
 	)
 }
+
+func TestPaymentDelete(t *testing.T) {
+	// Prepare the Server & seed some data
+	server, err := NewTestServer()
+	assert.Nil(t, err)
+	defer server.Shutdown()
+	user1 := server.SeedUser()
+	user1Bill := server.SeedBill(user1["id"].(string))
+	user1Payment := server.SeedPayment(user1Bill["id"].(string))
+	user2 := server.SeedUser()
+	user2Bill := server.SeedBill(user2["id"].(string))
+	user2Payment := server.SeedPayment(user2Bill["id"].(string))
+
+	// Validate auth is required
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodDelete, "/payments"+user1Payment["id"].(string), nil)
+	server.deletePayment()(recorder, req)
+	assert.Equal(t,
+		response.Response{
+			StatusCode:   http.StatusUnauthorized,
+			StatusText:   http.StatusText(http.StatusUnauthorized),
+			ErrorDetails: nil,
+			Result:       nil,
+		},
+		response.Parse(recorder.Result().Body),
+	)
+
+	// Try to delete a payment that doesn't exist
+	recorder = httptest.NewRecorder()
+	req = server.NewAuthenticatedRequest(http.MethodDelete, "/payments/invalid-id", user1["id"].(string), nil)
+	server.deletePayment()(recorder, req)
+	assert.Equal(t,
+		response.Response{
+			StatusCode:   http.StatusNotFound,
+			StatusText:   http.StatusText(http.StatusNotFound),
+			ErrorDetails: nil,
+			Result:       nil,
+		},
+		response.Parse(recorder.Result().Body),
+	)
+
+	// Try to delete another users payment
+	recorder = httptest.NewRecorder()
+	req = server.NewAuthenticatedRequest(http.MethodDelete, "/payments/"+user2Payment["id"].(string), user1["id"].(string), nil)
+	server.deletePayment()(recorder, req)
+	assert.Equal(t,
+		response.Response{
+			StatusCode:   http.StatusForbidden,
+			StatusText:   http.StatusText(http.StatusForbidden),
+			ErrorDetails: nil,
+			Result:       nil,
+		},
+		response.Parse(recorder.Result().Body),
+	)
+
+	// Test that we can successfully delete our payment
+	recorder = httptest.NewRecorder()
+	req = server.NewAuthenticatedRequest(http.MethodDelete, "/payments/"+user1Payment["id"].(string), user1["id"].(string), nil)
+	server.deletePayment()(recorder, req)
+	assert.Equal(t,
+		response.Response{
+			StatusCode:   http.StatusOK,
+			StatusText:   http.StatusText(http.StatusOK),
+			ErrorDetails: nil,
+			Result:       nil,
+		},
+		response.Parse(recorder.Result().Body),
+	)
+}
