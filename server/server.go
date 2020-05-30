@@ -26,10 +26,19 @@ type Server struct {
 func (s *Server) registerRoutes() {
 	requireAuth := middleware.GetRequireAuthMiddleware(s.JwtSignatory)
 	s.Router.HandlerFunc(http.MethodGet, "/ping", s.ping())
+
+	// Payments Endpoints
+	s.Router.HandlerFunc(http.MethodGet, "/payments", requireAuth(s.fetchPayments()))
+	s.Router.HandlerFunc(http.MethodPost, "/payments", requireAuth(s.createPayment()))
+	s.Router.HandlerFunc(http.MethodDelete, "/payments/:id", requireAuth(s.deletePayment()))
+
+	// Bills Endpoints
 	s.Router.HandlerFunc(http.MethodGet, "/bills", requireAuth(s.fetchBills()))
 	s.Router.HandlerFunc(http.MethodPost, "/bills", requireAuth(s.createBill()))
 	s.Router.HandlerFunc(http.MethodPut, "/bills/:id", requireAuth(s.updateBill()))
 	s.Router.HandlerFunc(http.MethodDelete, "/bills/:id", requireAuth(s.deleteBill()))
+
+	// Auth Endpoints
 	s.Router.HandlerFunc(http.MethodPost, "/users", s.createUser())
 	s.Router.HandlerFunc(http.MethodPost, "/auth/login", s.login())
 	s.Router.HandlerFunc(http.MethodPost, "/auth/refresh", s.authRefresh())
