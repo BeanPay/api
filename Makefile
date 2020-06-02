@@ -37,4 +37,8 @@ docker-build:
 docker-clean:
 	docker-compose down
 
+docker-publish:
+	docker tag beanpay/api gcr.io/beanpay/api
+	docker push gcr.io/beanpay/api
+
 .PHONY: docker docker-build docker-clean
