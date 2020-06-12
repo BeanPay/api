@@ -49,5 +49,6 @@ func (s *Server) registerRoutes() {
 func (s *Server) Start() {
 	s.registerRoutes()
 	fmt.Println(fmt.Sprintf("Starting server on :%v", s.Port))
-	http.ListenAndServe(":"+s.Port, s.Router)
+	handler := middleware.Cors(s.Router)
+	http.ListenAndServe(":"+s.Port, handler)
 }
