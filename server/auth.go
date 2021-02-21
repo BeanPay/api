@@ -102,7 +102,10 @@ func (s *Server) logout() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		resp := response.New(w)
 		defer resp.Output()
-		//get the refresh token
+		// Set the refresh_token to force an override of any
+		// existing cookies. This cookie is set as already expired.
+		// This needs to be done as it's a HttpOnly cookie,
+		// so this cannot be deleted from the client.
 		http.SetCookie(w, &http.Cookie{
 			Name:     "refresh_token",
 			Value:    "",
