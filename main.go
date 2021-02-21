@@ -24,6 +24,7 @@ func main() {
 	}
 
 	server := &server.Server{
+		Version:   "0.1.1",
 		Port:      os.Getenv("PORT"),
 		Router:    httprouter.New(),
 		Validator: validator.New(),

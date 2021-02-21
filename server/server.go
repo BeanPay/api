@@ -15,6 +15,7 @@ import (
 // have access to the server values.
 type Server struct {
 	Port         string
+	Version      string
 	Router       *httprouter.Router
 	Validator    validator.Validator
 	JwtSignatory *jwt.JwtSignatory
