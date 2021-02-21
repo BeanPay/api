@@ -8,7 +8,8 @@ import (
 
 func (s *Server) ping() http.HandlerFunc {
 	type pingResponse struct {
-		DbConn string `json:"database_connection"`
+		Version string `json:"version"`
+		DbConn  string `json:"database_connection"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -16,7 +17,8 @@ func (s *Server) ping() http.HandlerFunc {
 		defer resp.Output()
 		responseStatus := http.StatusOK
 		pingResp := pingResponse{
-			DbConn: "OK",
+			Version: s.Version,
+			DbConn:  "OK",
 		}
 		err := s.DB.Ping()
 		if err != nil {
