@@ -117,7 +117,7 @@ func (s *Server) createPayment() http.HandlerFunc {
 	type RequestBody struct {
 		BillId    string  `json:"bill_id" validate:"required"`
 		DueDate   string  `json:"due_date" validate:"required,datetime=2006-01-02"`
-		TotalPaid float64 `json:"total_paid" validate:"required,gte=0"`
+		TotalPaid float64 `json:"total_paid" validate:"gte=0"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		resp := response.New(w)

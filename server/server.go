@@ -41,6 +41,7 @@ func (s *Server) registerRoutes() {
 	// Auth Endpoints
 	s.Router.HandlerFunc(http.MethodPost, "/users", s.createUser())
 	s.Router.HandlerFunc(http.MethodPost, "/auth/login", s.login())
+	s.Router.HandlerFunc(http.MethodPost, "/auth/logout", s.logout())
 	s.Router.HandlerFunc(http.MethodPost, "/auth/refresh", s.authRefresh())
 }
 
