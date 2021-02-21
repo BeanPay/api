@@ -98,22 +98,22 @@ func (s *Server) login() http.HandlerFunc {
 	}
 }
 
-func(s  *Server) logout() http.HandlerFunc {
-    return func(w http.ResponseWriter, r *http.Request) {
-        resp := response.New(w)
-        defer resp.Output()
-        //get the refresh token
-        http.SetCookie(w, &http.Cookie {
-            Name:     "refresh_token",
-            Value:    "",
-            Expires:  time.Unix(0,0),
-            Path:     "/",
-            Secure:   true,
-            HttpOnly: true,
-            SameSite: http.SameSiteStrictMode,
-        })
-        resp.SetResult(http.StatusOK, nil)
-    }
+func (s *Server) logout() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		resp := response.New(w)
+		defer resp.Output()
+		//get the refresh token
+		http.SetCookie(w, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    "",
+			Expires:  time.Unix(0, 0),
+			Path:     "/",
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
+		})
+		resp.SetResult(http.StatusOK, nil)
+	}
 }
 
 func (s *Server) authRefresh() http.HandlerFunc {
